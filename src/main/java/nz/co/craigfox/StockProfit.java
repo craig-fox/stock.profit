@@ -83,41 +83,48 @@ public class StockProfit {
         List<Integer> priceListFirstHalf = new ArrayList<>(priceList.subList(0, midIndex+1));
         List<Integer> priceListSecondHalf = new ArrayList<>(priceList.subList(midIndex+1, priceList.size()));
 
-        Integer minPrice = getPrice(priceListFirstHalf, Reducer.MIN);
-        Integer maxPrice = getPrice(priceListSecondHalf, Reducer.MAX);
+        Integer buyPrice = getPrice(priceListFirstHalf, Reducer.MIN);
+        Integer sellPrice = getPrice(priceListSecondHalf, Reducer.MAX);
 
-        int minPriceIndex = priceListFirstHalf.indexOf(minPrice);
-        int maxPriceIndex = priceListSecondHalf.indexOf(maxPrice);
+        int buyPriceIndex = priceListFirstHalf.indexOf(buyPrice);
+        int sellPriceIndex = priceListSecondHalf.indexOf(sellPrice);
 
-        priceListFirstHalf = dropPrices(priceListFirstHalf, minPriceIndex, Side.LEFT);
+        priceListFirstHalf = dropPrices(priceListFirstHalf, buyPriceIndex, Side.LEFT);
         if(!priceListFirstHalf.isEmpty()){
             int maxFirstHalfPrice = getPrice(priceListFirstHalf, Reducer.MAX);
-            maxPrice = (maxFirstHalfPrice > maxPrice) ? maxFirstHalfPrice : maxPrice;
+            sellPrice = (maxFirstHalfPrice > sellPrice) ? maxFirstHalfPrice : sellPrice;
         }
 
-        priceListSecondHalf = dropPrices(priceListSecondHalf, maxPriceIndex, Side.RIGHT);
+        priceListSecondHalf = dropPrices(priceListSecondHalf, sellPriceIndex, Side.RIGHT);
         if(!priceListSecondHalf.isEmpty()){
             int minSecondHalfPrice = getPrice(priceListSecondHalf, Reducer.MIN);
-            minPrice = (minSecondHalfPrice < minPrice) ? minSecondHalfPrice : minPrice;
+            buyPrice = (minSecondHalfPrice < buyPrice) ? minSecondHalfPrice : buyPrice;
         }
 
-        result = maxPrice - minPrice;
+        buyPriceIndex = priceList.indexOf(buyPrice);
+        sellPriceIndex = priceList.lastIndexOf(sellPrice);
+        result = sellPrice - buyPrice;
 
         /*Handle for case where all prices are descending */
         if(result < 0){
-            System.out.println("Initial loss " + result);
             int loss = result;
             for(int i=0; i<priceList.size()-1; i++){
                 int diff = priceList.get(i+1) - priceList.get(i);
+                if(diff > loss){
+                    buyPrice = priceList.get(i);
+                    sellPrice = priceList.get(i+1);
+                    buyPriceIndex = i;
+                    sellPriceIndex = i+1;
+                    loss = diff;
+
+                }
                 loss = (diff > loss) ? diff: loss;
             }
             result = loss;
-            pw.printf("Profit is %s\n",result);
-        } else {
-            pw.printf("Minimum price is %s at location %s\n", minPrice, priceList.indexOf(minPrice) + 1);
-            pw.printf("Maximum price is %s at location %s\n", maxPrice, priceList.lastIndexOf(maxPrice) + 1);
-            pw.printf("Profit is %s\n", result);
         }
+        pw.printf("Buy price is %s at location %s\n", buyPrice, buyPriceIndex + 1);
+        pw.printf("Sell price is %s at location %s\n", sellPrice, sellPriceIndex + 1);
+        pw.printf("Profit is %s\n", result);
 
         return result;
     }
